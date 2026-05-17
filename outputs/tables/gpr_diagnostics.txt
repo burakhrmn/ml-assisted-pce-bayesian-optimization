@@ -1,0 +1,10 @@
+Gaussian Process Regression diagnostics
+Optimized kernel: 0.646**2 * RBF(length_scale=[1e+03, 0.0127]) + WhiteKernel(noise_level=0.574)
+Best observed condition: SnO2_Rpm=4500.0, Spiro_Oxid_Dur=6.0
+Best observed max_efficiency: 17.322000
+Number of candidate grid points: 1333
+Number of exact existing conditions excluded: 19
+Candidates with GPR mean above best observed: 0
+Candidates with GPR UCB beta=1.96 above best observed: 1240
+Top-20 EI range: 0.00000019
+EI diagnostic note: Many top candidates have nearly identical EI values.

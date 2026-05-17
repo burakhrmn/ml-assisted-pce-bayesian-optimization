@@ -1,0 +1,266 @@
+# Machine Learning–Assisted Optimization of Perovskite Solar Cell Fabrication Using Bayesian Optimization
+
+This project analyzes perovskite solar cell fabrication data and uses machine-learning-assisted Bayesian Optimization to propose experimentally meaningful challenger fabrication conditions for improving power conversion efficiency (PCE).
+
+The workflow is designed for scientific decision support. It does not claim guaranteed performance improvements. Instead, it converts existing experimental observations into grouped-condition summaries, compares predictive models, and proposes validation candidates that should be tested experimentally.
+
+## Scientific Motivation
+
+Perovskite solar cell PCE depends strongly on fabrication parameters. Exhaustively testing all combinations is expensive, so data-driven screening can help prioritize the next experiments.
+
+This project focuses on two fabrication variables:
+
+- `SnO2_Rpm`: SnO₂ spin-coating speed
+- `Spiro_Oxid_Dur`: Spiro-OMeTAD oxidation duration
+
+The optimization target is:
+
+- `max_efficiency`: the best observed PCE for each grouped fabrication condition
+
+## Dataset
+
+The raw dataset is stored at:
+
+- `data/raw/data.csv`
+
+The raw CSV is not manually edited. During loading, the original raw column `Spiro_Des` is renamed in memory to `Spiro_Oxid_Dur`.
+
+The device-level raw data contains current-density, voltage, fill factor, PCE, fabrication parameters, device identifiers, scan direction, and date information.
+
+## Preprocessing Workflow
+
+The preprocessing stage:
+
+1. Loads `data/raw/data.csv`
+2. Renames `Spiro_Des` to `Spiro_Oxid_Dur`
+3. Validates the required columns
+4. Filters low-efficiency device records
+5. Saves the filtered device-level table
+6. Groups observations by fabrication condition
+
+The filtered table is saved to:
+
+- `outputs/tables/filtered_data.csv`
+
+## Efficiency Threshold
+
+Rows with:
+
+- `Efficiency [%] < 11`
+
+are removed before grouped-condition analysis. This threshold removes low-performing records that would otherwise dominate condition-level statistics and weaken the focus on experimentally useful fabrication regions.
+
+## Grouped-Condition Modeling
+
+The grouped table is based on:
+
+- `SnO2_Rpm`
+- `Spiro_Oxid_Dur`
+
+For each unique fabrication condition, the workflow calculates:
+
+- count
+- mean efficiency
+- max efficiency
+- standard deviation
+- minimum efficiency
+- median efficiency
+
+The grouped table is saved to:
+
+- `outputs/tables/grouped_conditions.csv`
+
+Modeling and Bayesian Optimization use this grouped table only, not the ungrouped device-level data.
+
+## Model Comparison
+
+The model comparison stage predicts:
+
+- `max_efficiency`
+
+from:
+
+- `SnO2_Rpm`
+- `Spiro_Oxid_Dur`
+
+Models are evaluated using Leave-One-Out Cross-Validation because the number of grouped fabrication conditions is small.
+
+Compared models:
+
+- Gaussian Process Regression
+- Random Forest Regressor
+- k-Nearest Neighbors Regressor
+- XGBoost Regressor, if installed
+
+If XGBoost is not installed, the workflow skips it gracefully.
+
+Model comparison outputs:
+
+- `outputs/tables/model_comparison_metrics.csv`
+- `outputs/tables/model_predictions_leave_one_out.csv`
+- `outputs/figures/model_comparison_rmse.png`
+- `outputs/figures/model_comparison_r2.png`
+- `outputs/figures/predicted_vs_observed_models.png`
+
+## Bayesian Optimization
+
+Random Forest had the best Leave-One-Out predictive performance, but Gaussian Process Regression is used as the Bayesian Optimization surrogate because it provides predictive uncertainty.
+
+The Bayesian Optimization stage:
+
+- fits a GPR surrogate on grouped fabrication conditions
+- predicts over a candidate grid inside the experimentally explored bounds
+- computes Expected Improvement
+- computes GPR Upper Confidence Bound scores
+- ranks diverse recommendations using physical spacing rules
+- compares GPR, Random Forest, kNN, and optional XGBoost candidate predictions
+- builds ensemble upper-score recommendations
+
+Key outputs:
+
+- `outputs/tables/candidate_predictions_enhanced.csv`
+- `outputs/tables/candidate_predictions_by_model.csv`
+- `outputs/tables/recommended_experiments_ei_diverse.csv`
+- `outputs/tables/recommended_experiments_ucb_diverse.csv`
+- `outputs/tables/recommended_experiments_ensemble_diverse.csv`
+- `outputs/tables/champion_challenger_experiments.csv`
+- `outputs/tables/curated_experimental_plan.csv`
+
+## Champion–Challenger Interpretation
+
+The current best experimentally observed condition remains:
+
+- `SnO2_Rpm = 4500 rpm`
+- `Spiro_Oxid_Dur = 6.0 h`
+- `max_efficiency = 17.322%`
+
+No mean model prediction exceeds this value.
+
+GPR-UCB and ensemble upper-score values should be interpreted as uncertainty-weighted potential, not guaranteed improvement.
+
+The recommended challenger validation batch is:
+
+1. 4200 rpm / 6.0 h
+2. 4050 rpm / 5.0 h
+3. 4300 rpm / 7.0 h
+4. 3600 rpm / 6.0 h
+5. 4650 rpm / 8.0 h
+
+These conditions require experimental validation.
+
+## Outputs
+
+Important tables:
+
+- `outputs/tables/filtered_data.csv`
+- `outputs/tables/grouped_conditions.csv`
+- `outputs/tables/model_comparison_metrics.csv`
+- `outputs/tables/candidate_predictions_enhanced.csv`
+- `outputs/tables/candidate_predictions_by_model.csv`
+- `outputs/tables/champion_challenger_experiments.csv`
+- `outputs/tables/curated_experimental_plan.csv`
+- `outputs/tables/gpr_diagnostics.txt`
+
+Important reports:
+
+- `outputs/analysis_report.md`
+- `outputs/final_summary.md`
+
+Important figures:
+
+- `outputs/figures/efficiency_threshold_histogram.png`
+- `outputs/figures/mean_efficiency_heatmap.png`
+- `outputs/figures/max_efficiency_heatmap.png`
+- `outputs/figures/std_efficiency_heatmap.png`
+- `outputs/figures/count_heatmap.png`
+- `outputs/figures/existing_experimental_conditions_map.png`
+- `outputs/figures/predicted_response_surface.png`
+- `outputs/figures/uncertainty_surface.png`
+- `outputs/figures/expected_improvement_map.png`
+- `outputs/figures/ucb_beta_1_96_map.png`
+- `outputs/figures/ensemble_upper_score_map.png`
+- `outputs/figures/recommended_experiments_map.png`
+
+## Data Sharing
+
+The repository is structured so that generated result tables and figures can be shared alongside the code. The `outputs/` directory is intentionally not ignored.
+
+The raw dataset remains unchanged in `data/raw/data.csv`; all renamed columns and derived tables are generated by the workflow.
+
+## Data Availability
+
+The full experimental dataset is not included in the public repository at this stage.
+
+An anonymized example file is provided at:
+
+- `data/raw/data_example.csv`
+
+This file demonstrates the expected input format while replacing device identifiers with anonymized IDs and replacing exact dates with synthetic dates.
+
+The full dataset may be made available from the corresponding author upon reasonable request.
+
+To run the workflow with the example dataset, either:
+
+- copy `data/raw/data_example.csv` to `data/raw/data.csv`, or
+- update the data path in `src/config.py` (`RAW_DATA_PATH`).
+
+## Installation
+
+Create and activate a virtual environment, then install dependencies.
+
+Windows:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+macOS/Linux:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Required packages:
+
+- pandas
+- numpy
+- scipy
+- scikit-learn
+- matplotlib
+- seaborn
+
+XGBoost is optional. It is not listed in `requirements.txt`; if it is not installed, the workflow skips XGBoost-related model comparison and candidate predictions gracefully.
+
+## How to Run
+
+Run the full workflow from the project root:
+
+```bash
+python main.py
+```
+
+This regenerates the processed tables, model comparison outputs, Bayesian Optimization outputs, figures, curated experimental plan, and final reports.
+
+## Limitations
+
+- The number of unique fabrication conditions is small.
+- Leave-One-Out metrics should be interpreted cautiously.
+- GPR uncertainty is useful for ranking hypotheses but may be broad because the design space is sparsely sampled.
+- UCB values above the current champion reflect uncertainty-weighted potential, not confirmed improvement.
+- Candidate recommendations are constrained to the experimentally explored parameter bounds.
+
+## Experimental Validation Disclaimer
+
+The proposed challenger conditions are model-guided experimental hypotheses. They are not guaranteed to outperform the current champion condition and require validation through new fabrication experiments.
+
+## License
+
+The source code is released under the MIT License.
+
+The anonymized example dataset and generated documentation/outputs are shared with attribution under CC BY 4.0 unless otherwise stated.
+
+The full experimental dataset is not included in the repository.
