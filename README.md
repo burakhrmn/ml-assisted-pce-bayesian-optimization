@@ -94,13 +94,6 @@ Compared models:
 
 If XGBoost is not installed, the workflow skips it gracefully.
 
-Model comparison outputs:
-
-- `outputs/tables/model_comparison_metrics.csv`
-- `outputs/tables/model_predictions_leave_one_out.csv`
-- `outputs/figures/model_comparison_rmse.png`
-- `outputs/figures/model_comparison_r2.png`
-- `outputs/figures/predicted_vs_observed_models.png`
 
 ## Bayesian Optimization
 
@@ -115,24 +108,6 @@ The Bayesian Optimization stage:
 - ranks diverse recommendations using physical spacing rules
 - compares GPR, Random Forest, kNN, and optional XGBoost candidate predictions
 - builds ensemble upper-score recommendations
-
-Key outputs:
-
-- `outputs/tables/candidate_predictions_enhanced.csv`
-- `outputs/tables/candidate_predictions_by_model.csv`
-- `outputs/tables/recommended_experiments_ei_diverse.csv`
-- `outputs/tables/recommended_experiments_ucb_diverse.csv`
-- `outputs/tables/recommended_experiments_ensemble_diverse.csv`
-- `outputs/tables/champion_challenger_experiments.csv`
-- `outputs/tables/curated_experimental_plan.csv`
-
-## Champion–Challenger Interpretation
-
-The current best experimentally observed condition remains:
-
-- `SnO2_Rpm = 4500 rpm`
-- `Spiro_Oxid_Dur = 6.0 h`
-- `max_efficiency = 17.322%`
 
 
 ## Data Sharing
